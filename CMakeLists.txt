@@ -2,7 +2,7 @@
 # cmake -S . -B build
 # cmake --build build
 
-## Exe will be in build/Debug (Windows) or build
+## Exe will be in build/Debug
 # cd build
 # ./hello
 
@@ -36,7 +36,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 add_subdirectory(libs/SDL EXCLUDE_FROM_ALL)
 
 # Add SDL2_image repo
-add_subdirectory(libs/SDL_Image EXCLUDE_FROM_ALL)
+add_subdirectory(libs/SDL_image EXCLUDE_FROM_ALL)
+
+# opengl is part of your graphics drivers or kernel, so just need to ask for it
+find_package(OpenGL REQUIRED)
+
+set(SRC_FILES src/main.c)
 
 # Add glew
 if (WIN32)
@@ -44,24 +49,28 @@ if (WIN32)
     add_library(glew STATIC IMPORTED GLOBAL)
     set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew-win-2.2.0/bin/Release/x64/glew32.dll)
     set_target_properties(glew PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew-win-2.2.0/include)
+    set_target_properties(glew PROPERTIES LINKER_LANGUAGE C)
+
+    # Create your game executable target as usual
+    add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
+
+    # Link to the actual SDL2 library.
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image glew ${OPENGL_LIBRARIES})
 
 else ()
     include_directories(libs/glew-2.2.0/include)
-    add_library(glew STATIC IMPORTED GLOBAL)
-    set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew-2.2.0/bin/Release/x64/glew32.dll)
-    set_target_properties(glew PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew-2.2.0/include)
+    set(GLEW_SRC ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew-2.2.0/src/glew.c)
+    set(SRC_FILES ${SRC_FILES} ${GLEW_SRC})
+
+    # Create your game executable target as usual
+    add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
+
+    # Link to the actual SDL2 library.
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image ${OPENGL_LIBRARIES})
 endif ()
-set_target_properties(glew PROPERTIES LINKER_LANGUAGE C)
-
-# opengl is part of your graphics drivers or kernel, so just need to ask for it
-find_package(OpenGL REQUIRED)
 
 
-# Create your game executable target as usual
-add_executable(${CMAKE_PROJECT_NAME} src/main.c)
 
-# Link to the actual SDL2 library.
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2 SDL2_image::SDL2_image glew ${OPENGL_LIBRARIES})
 
 # copy assets
 add_custom_command(

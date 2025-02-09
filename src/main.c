@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
 		SDL_Delay(0);
 	}
 
-	// App has been flagged to stop, so tidy before we finish
+	// App flagged to stop, so tidy before exit
 	glDeleteShader(vertexShaderHandle);
 	glDeleteShader(fragmentShaderHandle);
 	glDeleteProgram(shaderProgram);
